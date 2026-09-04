@@ -233,10 +233,10 @@
    Your sheet's header row (first row) must read exactly:
    Viewers,Game,Date,Time,Network,Week,Phase
    ============================================================ */
-const SHEET_CSV_URL = "PASTE_YOUR_PUBLISHED_CSV_LINK_HERE";
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTUwV4FRxTVEP6tqNwnevgb3PqGdtXED2hlzNf99cXve6bz44pW81YiJi_GMcLELGfZ3-R7-_RhMj07/pub?output=csv";
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // re-check every 5 minutes
 
-const WEEK_ORDER = ['Week 1','Week 2','Week 3','Week 4','Week 5','Week 6','Week 7','Week 8','Week 9','Week 10','Week 11','Week 12','Week 13','Week 14','Week 15','Week 16','Week 17','Conference Championships','Army-Navy','Bowl Games','College Football Playoff'];
+const WEEK_ORDER = ['Week 0','Week 1','Week 2','Week 3','Week 4','Week 5','Week 6','Week 7','Week 8','Week 9','Week 10','Week 11','Week 12','Week 13','Week 14','Week 15','Week 16','Week 17','Conference Championships','Army-Navy','Bowl Games','College Football Playoff'];
 
 const NETWORK_COLORS = {
   "ABC": "#5E9CFF", "ESPN": "#fe3b1f", "ESPN2": "#FF7A59", "ESPNU": "#FFB84D",
@@ -283,7 +283,7 @@ async function loadData() {
     const rows = parseCSV(text);
     const header = rows[0].map(h => h.trim().toLowerCase());
     const idx = {
-      viewers: header.indexOf('viewers'),
+      viewers: header.findIndex(h => h.includes('viewers')),
       game: header.indexOf('game'),
       date: header.indexOf('date'),
       time: header.indexOf('time'),
@@ -291,17 +291,26 @@ async function loadData() {
       week: header.indexOf('week'),
       phase: header.indexOf('phase')
     };
+    const hasPhaseColumn = idx.phase !== -1;
     DATA = rows.slice(1)
       .filter(r => r[idx.game] && r[idx.game].trim())
-      .map(r => ({
-        viewers: parseFloat(r[idx.viewers]) || 0,
-        game: (r[idx.game] || '').trim(),
-        date: (r[idx.date] || '').trim(),
-        time: (r[idx.time] || '').trim(),
-        network: (r[idx.network] || '').trim(),
-        week: (r[idx.week] || '').trim(),
-        phase: (r[idx.phase] || '').trim()
-      }));
+      .map(r => {
+        const rawWeek = (r[idx.week] || '').trim();
+        const isNumericWeek = /^\d+$/.test(rawWeek);
+        const week = isNumericWeek ? `Week ${rawWeek}` : rawWeek;
+        const phase = hasPhaseColumn
+          ? (r[idx.phase] || '').trim()
+          : (isNumericWeek ? 'Regular Season' : rawWeek);
+        return {
+          viewers: parseFloat(r[idx.viewers]) || 0,
+          game: (r[idx.game] || '').trim(),
+          date: (r[idx.date] || '').trim(),
+          time: (r[idx.time] || '').trim(),
+          network: (r[idx.network] || '').trim(),
+          week,
+          phase
+        };
+      });
 
     statusBanner.classList.remove('error');
     statusText.textContent = 'Live — synced ' + new Date().toLocaleTimeString();
