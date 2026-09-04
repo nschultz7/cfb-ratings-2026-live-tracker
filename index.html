@@ -99,7 +99,8 @@
 
   .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
   @media (min-width: 640px) { .controls { flex-wrap: nowrap; } }
-  .status-line { font-size: 12px; color: var(--text-dim); margin-bottom: 14px; }
+  .status-line { font-size: 12px; color: var(--text-dim); margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+  .status-line .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
   .search-box { flex: 1 1 120px; max-width: 170px; position: relative; }
   .search-box input {
     width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text);
@@ -176,7 +177,9 @@
     </button>
   </header>
 
-  <div class="status-line" id="statusLine"></div>
+  <div class="status-line" id="statusLine">
+    <span class="status-dot"></span><span id="statusText"></span>
+  </div>
 
   <div class="controls">
     <div class="search-box"><input type="text" id="searchInput" placeholder="Search by team..."></div>
@@ -220,6 +223,11 @@
    ============================================================ */
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTUwV4FRxTVEP6tqNwnevgb3PqGdtXED2hlzNf99cXve6bz44pW81YiJi_GMcLELGfZ3-R7-_RhMj07/pub?output=csv";
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // re-check every 5 minutes
+
+const AP_MONTHS = ['Jan.','Feb.','March','April','May','June','July','Aug.','Sept.','Oct.','Nov.','Dec.'];
+function formatAPDate(d) {
+  return AP_MONTHS[d.getMonth()] + ' ' + d.getDate();
+}
 
 const WEEK_ORDER = ['Week 0','Week 1','Week 2','Week 3','Week 4','Week 5','Week 6','Week 7','Week 8','Week 9','Week 10','Week 11','Week 12','Week 13','Week 14','Week 15','Week 16','Week 17','Conference Championships','Army-Navy','Bowl Games','College Football Playoff'];
 
@@ -295,10 +303,10 @@ async function loadData() {
         };
       });
 
-    const statusLine = document.getElementById('statusLine');
+    const statusText = document.getElementById('statusText');
     const lastModified = res.headers.get('last-modified');
     const updateDate = lastModified ? new Date(lastModified) : new Date();
-    statusLine.textContent = 'Last updated ' + updateDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    statusText.textContent = 'Last updated: ' + formatAPDate(updateDate);
     console.log('Live data synced ' + new Date().toLocaleTimeString());
   } catch (e) {
     console.error('Could not load live data:', e.message);
