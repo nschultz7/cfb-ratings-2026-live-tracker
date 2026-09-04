@@ -97,22 +97,9 @@
   }
   .theme-toggle:hover { border-color: var(--primary); }
 
-  .status-banner {
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .status-banner.error { color: var(--primary); }
-  .status-dot {
-    width: 6px; height: 6px; border-radius: 50%; background: #3FD68A; flex-shrink: 0;
-  }
-  .status-banner.error .status-dot { background: var(--primary); }
-
   .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
   @media (min-width: 640px) { .controls { flex-wrap: nowrap; } }
+  .status-line { font-size: 12px; color: var(--text-dim); margin-bottom: 14px; }
   .search-box { flex: 1 1 120px; max-width: 170px; position: relative; }
   .search-box input {
     width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text);
@@ -189,9 +176,7 @@
     </button>
   </header>
 
-  <div class="status-banner" id="statusBanner">
-    <span class="status-dot"></span> <span id="statusText">Loading latest data&hellip;</span>
-  </div>
+  <div class="status-line" id="statusLine"></div>
 
   <div class="controls">
     <div class="search-box"><input type="text" id="searchInput" placeholder="Search by team..."></div>
@@ -271,8 +256,6 @@ function parseCSV(text) {
 }
 
 async function loadData() {
-  const statusBanner = document.getElementById('statusBanner');
-  const statusText = document.getElementById('statusText');
   try {
     if (!SHEET_CSV_URL || SHEET_CSV_URL.indexOf('PASTE_YOUR') === 0) {
       throw new Error('Sheet link not configured yet');
@@ -312,11 +295,13 @@ async function loadData() {
         };
       });
 
-    statusBanner.classList.remove('error');
-    statusText.textContent = 'Live — synced ' + new Date().toLocaleTimeString();
+    const statusLine = document.getElementById('statusLine');
+    const lastModified = res.headers.get('last-modified');
+    const updateDate = lastModified ? new Date(lastModified) : new Date();
+    statusLine.textContent = 'Last updated ' + updateDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    console.log('Live data synced ' + new Date().toLocaleTimeString());
   } catch (e) {
-    statusBanner.classList.add('error');
-    statusText.textContent = 'Could not load live data (' + e.message + ') — check SHEET_CSV_URL in the page source';
+    console.error('Could not load live data:', e.message);
   }
   refreshFilterOptions();
   render();
