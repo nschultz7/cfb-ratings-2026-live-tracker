@@ -276,8 +276,8 @@ async function loadData() {
     const idx = {
       viewers: header.findIndex(h => h.includes('viewers')),
       game: header.indexOf('game'),
-      date: header.indexOf('date'),
-      time: header.indexOf('time'),
+      date: header.findIndex(h => h.startsWith('date')),
+      time: header.findIndex(h => h.startsWith('time')),
       network: header.indexOf('network'),
       week: header.indexOf('week'),
       phase: header.indexOf('phase')
