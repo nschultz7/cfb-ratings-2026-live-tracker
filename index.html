@@ -229,6 +229,28 @@ function formatAPDate(d) {
   return AP_MONTHS[d.getMonth()] + ' ' + d.getDate();
 }
 
+const AP_MONTH_MAP = {
+  jan: 'Jan.', january: 'Jan.', feb: 'Feb.', february: 'Feb.',
+  mar: 'March', march: 'March', apr: 'April', april: 'April', may: 'May',
+  jun: 'June', june: 'June', jul: 'July', july: 'July',
+  aug: 'Aug.', august: 'Aug.', sep: 'Sept.', sept: 'Sept.', september: 'Sept.',
+  oct: 'Oct.', october: 'Oct.', nov: 'Nov.', november: 'Nov.', dec: 'Dec.', december: 'Dec.'
+};
+// Rewrites sheet dates into AP style, e.g. "Oct 3" / "October 3rd" / "10/3" -> "Oct. 3"
+function toAPDate(str) {
+  if (!str) return str;
+  let s = str.trim();
+  s = s.replace(
+    /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b\.?\s*(\d{1,2})(?:st|nd|rd|th)?\b/gi,
+    (m, mon, day) => AP_MONTH_MAP[mon.toLowerCase()] + ' ' + parseInt(day, 10)
+  );
+  s = s.replace(/^(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?$/, (m, mo, day) => {
+    const name = AP_MONTHS[parseInt(mo, 10) - 1];
+    return name ? name + ' ' + parseInt(day, 10) : m;
+  });
+  return s;
+}
+
 const WEEK_ORDER = ['Week 0','Week 1','Week 2','Week 3','Week 4','Week 5','Week 6','Week 7','Week 8','Week 9','Week 10','Week 11','Week 12','Week 13','Week 14','Week 15','Week 16','Week 17','Conference Championships','Army-Navy','Bowl Games','College Football Playoff'];
 
 const NETWORK_COLORS = {
@@ -295,7 +317,7 @@ async function loadData() {
         return {
           viewers: parseFloat(r[idx.viewers]) || 0,
           game: (r[idx.game] || '').trim(),
-          date: (r[idx.date] || '').trim(),
+          date: toAPDate((r[idx.date] || '').trim()),
           time: (r[idx.time] || '').trim(),
           network: (r[idx.network] || '').trim(),
           week,
